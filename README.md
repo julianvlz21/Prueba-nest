@@ -29,6 +29,27 @@ docker compose exec api npm run seed
 - API: <http://localhost:3000>
 - **Swagger: <http://localhost:3000/docs>**
 
+### Seeds por endpoint
+
+También se pueden ejecutar desde Swagger o Postman (sección **Seed**). Se autentican con el header `x-api-key`
+(una de las claves de `API_KEYS`), no con JWT, porque en una base vacía todavía no existe ningún usuario para iniciar sesión.
+
+| Endpoint | Crea |
+|---|---|
+| `POST /seed` | Todo lo siguiente, en orden |
+| `POST /seed/users` | 1 ADMIN y 2 TECHNICIAN |
+| `POST /seed/mechanics` | 3 mecánicos (incluye usuarios) |
+| `POST /seed/workshops` | 2 talleres |
+| `POST /seed/vehicles` | 4 vehículos |
+| `POST /seed/maintenances` | 1 mantenimiento COMPLETED y 1 IN_PROGRESS (incluye todo lo anterior) |
+
+Todos son idempotentes: la respuesta indica en `data.created` lo que se creó (vacío si ya existía) y nunca duplican datos.
+Cada paso crea lo que necesita, así que se pueden llamar en cualquier orden.
+
+```bash
+curl -X POST http://localhost:3000/seed -H "x-api-key: demo-key-partner-1"
+```
+
 Para detener: `docker compose down` (añade `-v` para borrar también el volumen de datos).
 
 ### Sin Docker
@@ -83,6 +104,7 @@ mantenimiento `IN_PROGRESS` y 1 `INACTIVE`) y un mantenimiento `COMPLETED` para 
 | Mantenimientos | `POST /maintenances`, `GET /maintenances`, `/active`, `/vehicle/:id`, `/vehicle/:id/history`, `/mechanic/:id`, `/my`, `PATCH /maintenances/:id/status` | ADMIN; el TECHNICIAN solo ve y actualiza los suyos |
 | Auditoría | `GET /maintenances/audit`, `GET /maintenances/:id/audit` | ADMIN |
 | Integraciones | `GET /integrations/vehicles/:plate/maintenances` | header `x-api-key` |
+| Seed | `POST /seed`, `/seed/users`, `/seed/mechanics`, `/seed/workshops`, `/seed/vehicles`, `/seed/maintenances` | header `x-api-key` |
 
 ## Autenticación y autorización
 
@@ -148,11 +170,11 @@ docker compose exec -T db psql -U postgres -d fleetcore < database/fleetcore.sql
 
 ```bash
 npm test            # 52 pruebas
-npm run test:cov    # con cobertura (~76 % sobre servicios, guards, filtro e interceptor)
+npm run test:cov    # con cobertura (~61 % sobre servicios, guards, filtro e interceptor)
 ```
 
 **Escenarios de API (Postman):** [`postman/FleetCore.postman_collection.json`](postman/FleetCore.postman_collection.json).
-Impórtala en Postman, con la API levantada y el seed ejecutado, y ejecuta la colección completa (Runner). Cubre autenticación, roles, vehículos, mecánicos, talleres, reglas de mantenimientos, cambios de estado, consultas, auditoría y API Key (77 verificaciones). También se puede correr por consola:
+Impórtala en Postman, con la API levantada y el seed ejecutado, y ejecuta la colección completa (Runner). Cubre autenticación, roles, vehículos, mecánicos, talleres, reglas de mantenimientos, cambios de estado, consultas, auditoría y API Key (85 verificaciones). También se puede correr por consola:
 
 ```bash
 npx newman run postman/FleetCore.postman_collection.json
