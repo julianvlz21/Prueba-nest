@@ -3,8 +3,8 @@
 API REST para gestionar el mantenimiento preventivo y correctivo de la flota de vehículos de FleetCore.
 Prueba de desempeño – Módulo 6.2 NestJS (Riwi).
 
-- **Coder:** _TU NOMBRE AQUÍ_
-- **Clan:** _TU CLAN AQUÍ_
+- **Coder:** JULIAN VALENZUELA LUNA
+- **Clan:** Nodejs am
 
 ## Tecnologías
 
