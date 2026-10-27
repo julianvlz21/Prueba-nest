@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict zas4MH9309ecIzbemicLtLO5BbqSc1C0dz3iufd5i3MNBkG0AYuKHBEraQFAK5q
+\restrict FirWbRSsvdBvne3zLJOJ7PbEeoJmGBU0r9NJApTOODLJD7Z6oQXxvAoDDMKqj1b
 
 -- Dumped from database version 17.11
 -- Dumped by pg_dump version 17.11
@@ -18,6 +18,30 @@ SET check_function_bodies = false;
 SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
+
+--
+-- Name: maintenance_audits_fromstatus_enum; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.maintenance_audits_fromstatus_enum AS ENUM (
+    'SCHEDULED',
+    'IN_PROGRESS',
+    'COMPLETED',
+    'CANCELLED'
+);
+
+
+--
+-- Name: maintenance_audits_tostatus_enum; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.maintenance_audits_tostatus_enum AS ENUM (
+    'SCHEDULED',
+    'IN_PROGRESS',
+    'COMPLETED',
+    'CANCELLED'
+);
+
 
 --
 -- Name: maintenances_status_enum; Type: TYPE; Schema: public; Owner: -
@@ -85,6 +109,41 @@ CREATE TYPE public.workshops_status_enum AS ENUM (
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
+
+--
+-- Name: maintenance_audits; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.maintenance_audits (
+    id integer NOT NULL,
+    "maintenanceId" integer NOT NULL,
+    "fromStatus" public.maintenance_audits_fromstatus_enum,
+    "toStatus" public.maintenance_audits_tostatus_enum NOT NULL,
+    "changedById" integer NOT NULL,
+    "changedByEmail" character varying(150) NOT NULL,
+    "changedAt" timestamp without time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: maintenance_audits_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.maintenance_audits_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: maintenance_audits_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.maintenance_audits_id_seq OWNED BY public.maintenance_audits.id;
+
 
 --
 -- Name: maintenances; Type: TABLE; Schema: public; Owner: -
@@ -268,6 +327,13 @@ ALTER SEQUENCE public.workshops_id_seq OWNED BY public.workshops.id;
 
 
 --
+-- Name: maintenance_audits id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.maintenance_audits ALTER COLUMN id SET DEFAULT nextval('public.maintenance_audits_id_seq'::regclass);
+
+
+--
 -- Name: maintenances id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -303,12 +369,25 @@ ALTER TABLE ONLY public.workshops ALTER COLUMN id SET DEFAULT nextval('public.wo
 
 
 --
+-- Data for Name: maintenance_audits; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.maintenance_audits (id, "maintenanceId", "fromStatus", "toStatus", "changedById", "changedByEmail", "changedAt") FROM stdin;
+1	1	\N	SCHEDULED	1	admin@fleetcore.com	2026-10-27 14:44:06.700641
+2	1	SCHEDULED	IN_PROGRESS	1	admin@fleetcore.com	2026-10-27 14:44:06.710269
+3	1	IN_PROGRESS	COMPLETED	1	admin@fleetcore.com	2026-10-27 14:44:06.717493
+4	2	\N	SCHEDULED	1	admin@fleetcore.com	2026-10-27 14:44:06.724343
+5	2	SCHEDULED	IN_PROGRESS	1	admin@fleetcore.com	2026-10-27 14:44:06.731077
+\.
+
+
+--
 -- Data for Name: maintenances; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.maintenances (id, type, description, mileage, "scheduledDate", "scheduledEndDate", status, "workDone", "finalCost", "finishedAt", "finalMileage", "vehicleId", "mechanicId", "workshopId", "createdAt") FROM stdin;
-1	PREVENTIVE	Cambio de aceite y filtros	45000	2026-10-24 12:52:51.528+00	2026-10-24 14:22:51.528+00	COMPLETED	Cambio de aceite y filtros	350000.00	2026-10-24 14:52:51.544+00	45010	1	2	1	2026-10-27 12:52:51.529066
-2	CORRECTIVE	Reemplazo de pastillas de freno	80000	2026-10-27 11:52:51.55+00	2026-10-27 15:52:51.55+00	IN_PROGRESS	\N	\N	\N	\N	3	1	1	2026-10-27 12:52:51.550439
+1	PREVENTIVE	Cambio de aceite y filtros	45000	2026-10-24 14:44:06.7+00	2026-10-24 16:14:06.7+00	COMPLETED	Cambio de aceite y filtros	350000.00	2026-10-24 16:44:06.717+00	45010	1	2	1	2026-10-27 14:44:06.700641
+2	CORRECTIVE	Reemplazo de pastillas de freno	80000	2026-10-27 13:44:06.724+00	2026-10-27 17:44:06.724+00	IN_PROGRESS	\N	\N	\N	\N	3	1	1	2026-10-27 14:44:06.724343
 \.
 
 
@@ -317,9 +396,9 @@ COPY public.maintenances (id, type, description, mileage, "scheduledDate", "sche
 --
 
 COPY public.mechanics (id, name, email, specialty, status, "userId", "createdAt") FROM stdin;
-1	Carlos Pérez	carlos@fleetcore.com	Frenos y suspensión	ACTIVE	2	2026-10-27 12:52:51.498118
-2	Laura Gómez	laura@fleetcore.com	Motor y transmisión	ACTIVE	3	2026-10-27 12:52:51.501936
-3	Andrés Ruiz	andres@fleetcore.com	Electricidad	INACTIVE	\N	2026-10-27 12:52:51.503849
+1	Carlos Pérez	carlos@fleetcore.com	Frenos y suspensión	ACTIVE	2	2026-10-27 14:44:06.669271
+2	Laura Gómez	laura@fleetcore.com	Motor y transmisión	ACTIVE	3	2026-10-27 14:44:06.673476
+3	Andrés Ruiz	andres@fleetcore.com	Electricidad	INACTIVE	\N	2026-10-27 14:44:06.675576
 \.
 
 
@@ -328,9 +407,9 @@ COPY public.mechanics (id, name, email, specialty, status, "userId", "createdAt"
 --
 
 COPY public.users (id, name, email, password, role, "createdAt") FROM stdin;
-1	Admin FleetCore	admin@fleetcore.com	$2b$10$ClIDcu0snX5931tXGqPLnO9Bs1ioJXNlepEEYHtyEFTOIFQHEnptK	ADMIN	2026-10-27 12:52:51.362581
-2	Técnico Uno	tecnico1@fleetcore.com	$2b$10$hvxYkHGZNWjvS.cxoxUzmusBs7Uw9hw6yqJHX3lXLMFT01ztqzfoi	TECHNICIAN	2026-10-27 12:52:51.429448
-3	Técnico Dos	tecnico2@fleetcore.com	$2b$10$.PlIxo4rE6BRABrNnAo1ku3wPt7imarMA90enyRooRP0u0xmkFEHS	TECHNICIAN	2026-10-27 12:52:51.490594
+1	Admin FleetCore	admin@fleetcore.com	$2b$10$uGemCn5C6w7CZv1gPPnqROK00n7f7iDHvFnbFmm2yrD/0gnVDmXLG	ADMIN	2026-10-27 14:44:06.52753
+2	Técnico Uno	tecnico1@fleetcore.com	$2b$10$BYy8wj97mj7z3Wead/0XfuOeZHjEtwyf5Ybt0fswtNkOH4290.K/K	TECHNICIAN	2026-10-27 14:44:06.596719
+3	Técnico Dos	tecnico2@fleetcore.com	$2b$10$u3tAoOgTrTqSm.Q/PlyyEuCz3QN4LLe7QNeYHoZKYcNvDW9Z3o7wW	TECHNICIAN	2026-10-27 14:44:06.661007
 \.
 
 
@@ -339,10 +418,10 @@ COPY public.users (id, name, email, password, role, "createdAt") FROM stdin;
 --
 
 COPY public.vehicles (id, plate, brand, model, year, mileage, status, "createdAt") FROM stdin;
-2	DEF456	Hino	300	2021	62000	AVAILABLE	2026-10-27 12:52:51.520533
-1	ABC123	Chevrolet	NPR	2022	45010	AVAILABLE	2026-10-27 12:52:51.517738
-3	GHI789	Isuzu	NKR	2020	80000	IN_MAINTENANCE	2026-10-27 12:52:51.522763
-4	JKL012	Foton	Aumark	2018	150000	INACTIVE	2026-10-27 12:52:51.524993
+2	DEF456	Hino	300	2021	62000	AVAILABLE	2026-10-27 14:44:06.692054
+1	ABC123	Chevrolet	NPR	2022	45010	AVAILABLE	2026-10-27 14:44:06.689299
+3	GHI789	Isuzu	NKR	2020	80000	IN_MAINTENANCE	2026-10-27 14:44:06.6943
+4	JKL012	Foton	Aumark	2018	150000	INACTIVE	2026-10-27 14:44:06.696618
 \.
 
 
@@ -351,9 +430,16 @@ COPY public.vehicles (id, plate, brand, model, year, mileage, status, "createdAt
 --
 
 COPY public.workshops (id, name, address, status, "createdAt") FROM stdin;
-1	Taller Norte	Calle 80 # 45-12, Bogotá	ACTIVE	2026-10-27 12:52:51.510616
-2	Taller Sur	Carrera 30 # 10-05, Bogotá	INACTIVE	2026-10-27 12:52:51.51201
+1	Taller Norte	Calle 80 # 45-12, Bogotá	ACTIVE	2026-10-27 14:44:06.682155
+2	Taller Sur	Carrera 30 # 10-05, Bogotá	INACTIVE	2026-10-27 14:44:06.683841
 \.
+
+
+--
+-- Name: maintenance_audits_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.maintenance_audits_id_seq', 5, true);
 
 
 --
@@ -432,6 +518,14 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- Name: maintenance_audits PK_ec90a205dc2d9bad88771eeaf45; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.maintenance_audits
+    ADD CONSTRAINT "PK_ec90a205dc2d9bad88771eeaf45" PRIMARY KEY (id);
+
+
+--
 -- Name: mechanics UQ_301c3b5fa2d49aab65dcfda36a6; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -488,6 +582,14 @@ ALTER TABLE ONLY public.mechanics
 
 
 --
+-- Name: maintenance_audits FK_b80ae52a00e880351f5b93b42bf; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.maintenance_audits
+    ADD CONSTRAINT "FK_b80ae52a00e880351f5b93b42bf" FOREIGN KEY ("maintenanceId") REFERENCES public.maintenances(id);
+
+
+--
 -- Name: maintenances FK_daa193fdfccde41a2ed4de8a474; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -499,5 +601,5 @@ ALTER TABLE ONLY public.maintenances
 -- PostgreSQL database dump complete
 --
 
-\unrestrict zas4MH9309ecIzbemicLtLO5BbqSc1C0dz3iufd5i3MNBkG0AYuKHBEraQFAK5q
+\unrestrict FirWbRSsvdBvne3zLJOJ7PbEeoJmGBU0r9NJApTOODLJD7Z6oQXxvAoDDMKqj1b
 

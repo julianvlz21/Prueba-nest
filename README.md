@@ -9,7 +9,7 @@ Prueba de desempeño – Módulo 6.2 NestJS (Riwi).
 ## Tecnologías
 
 NestJS 12 · TypeScript · TypeORM · PostgreSQL · JWT (`@nestjs/jwt`) · Swagger (`@nestjs/swagger`) ·
-`class-validator` / `class-transformer` · `bcryptjs` · Docker / docker-compose · Vitest.
+`class-validator` / `class-transformer` · `bcryptjs` · Docker / docker-compose · Jest.
 
 ## Puesta en marcha con Docker (recomendado)
 
@@ -81,6 +81,7 @@ mantenimiento `IN_PROGRESS` y 1 `INACTIVE`) y un mantenimiento `COMPLETED` para 
 | Mecánicos | `POST/GET/PATCH /mechanics`, `PATCH /mechanics/:id/activate\|deactivate`, `GET /mechanics/me` | ADMIN (`me`: TECHNICIAN) |
 | Talleres | `POST/PATCH /workshops`, `GET /workshops` (activos), `GET /workshops/all`, `PATCH /workshops/:id/activate\|deactivate` | escritura ADMIN, lectura autenticados |
 | Mantenimientos | `POST /maintenances`, `GET /maintenances`, `/active`, `/vehicle/:id`, `/vehicle/:id/history`, `/mechanic/:id`, `/my`, `PATCH /maintenances/:id/status` | ADMIN; el TECHNICIAN solo ve y actualiza los suyos |
+| Auditoría | `GET /maintenances/audit`, `GET /maintenances/:id/audit` | ADMIN |
 | Integraciones | `GET /integrations/vehicles/:plate/maintenances` | header `x-api-key` |
 
 ## Autenticación y autorización
@@ -103,6 +104,7 @@ mantenimiento `IN_PROGRESS` y 1 `INACTIVE`) y un mantenimiento `COMPLETED` para 
 - Para `COMPLETED` son obligatorios `workDone`, `finalCost`, `finishedAt` y `finalMileage`.
 - Los cambios de estado se ejecutan en una transacción con bloqueo de filas para evitar condiciones de carrera.
 - Vehículos, mecánicos y talleres se inactivan (borrado lógico) en lugar de eliminarse, para conservar el historial.
+- **Auditoría:** cada creación y cada cambio de estado de un mantenimiento queda registrado (estado anterior y nuevo, usuario y fecha) en la misma transacción que el cambio.
 
 ## Formato de respuestas
 
@@ -137,4 +139,21 @@ docker compose exec -T db psql -U postgres -d fleetcore < database/fleetcore.sql
 | `npm run start:dev` | Modo desarrollo con recarga |
 | `npm run seed` | Pobla la base de datos (idempotente) |
 | `npm run lint` | Linter (oxlint) |
-| `npm test` | Pruebas unitarias (Vitest) |
+| `npm test` | Pruebas unitarias (Jest) |
+| `npm run test:cov` | Pruebas con reporte de cobertura (`--coverage`) |
+
+## Pruebas
+
+**Unitarias (Jest):** reglas de cambio de estado, reglas de creación de mantenimientos (vehículo/mecánico/taller inactivos, kilometraje, cruce de horarios), guards (JWT, roles, API Key), filtro de excepciones, interceptor y servicios principales.
+
+```bash
+npm test            # 52 pruebas
+npm run test:cov    # con cobertura (~76 % sobre servicios, guards, filtro e interceptor)
+```
+
+**Escenarios de API (Postman):** [`postman/FleetCore.postman_collection.json`](postman/FleetCore.postman_collection.json).
+Impórtala en Postman, con la API levantada y el seed ejecutado, y ejecuta la colección completa (Runner). Cubre autenticación, roles, vehículos, mecánicos, talleres, reglas de mantenimientos, cambios de estado, consultas, auditoría y API Key (77 verificaciones). También se puede correr por consola:
+
+```bash
+npx newman run postman/FleetCore.postman_collection.json
+```
