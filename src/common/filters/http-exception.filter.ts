@@ -37,7 +37,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
       } else if (code === '23503') {
         statusCode = HttpStatus.CONFLICT;
         message = 'La operación viola una relación con otros registros';
-      } else if (code === '23502' || code === '22P02') {
+      } else if (['23502', '22P02', '22003', '22001'].includes(code)) {
+        // not null / invalid text / numeric out of range / value too long
         statusCode = HttpStatus.BAD_REQUEST;
         message = 'Datos inválidos';
       }

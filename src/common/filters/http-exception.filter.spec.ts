@@ -44,6 +44,11 @@ describe('AllExceptionsFilter', () => {
     expect(run(dbError('22P02')).status).toBe(400);
   });
 
+  it('maps numeric out of range (22003) and value too long (22001) to 400 instead of 500', () => {
+    expect(run(dbError('22003')).status).toBe(400);
+    expect(run(dbError('22001')).status).toBe(400);
+  });
+
   it('hides unexpected errors behind a generic 500', () => {
     // The filter logs unexpected errors on purpose; keep the test output clean.
     const logSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
