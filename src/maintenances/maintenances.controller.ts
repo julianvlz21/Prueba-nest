@@ -17,8 +17,8 @@ export class MaintenancesController {
   @Post()
   @Roles(Role.ADMIN)
   @ApiOperation({ summary: 'Crear un mantenimiento (estado inicial SCHEDULED)' })
-  create(@Body() dto: CreateMaintenanceDto) {
-    return this.maintenancesService.create(dto);
+  create(@Body() dto: CreateMaintenanceDto, @CurrentUser() user: JwtPayload) {
+    return this.maintenancesService.create(dto, user);
   }
 
   @Get()
@@ -34,6 +34,13 @@ export class MaintenancesController {
   @ApiOperation({ summary: 'Mantenimientos activos (SCHEDULED o IN_PROGRESS)' })
   findActive() {
     return this.maintenancesService.findActive();
+  }
+
+  @Get('audit')
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: 'Auditoría: cambios de estado de todos los mantenimientos' })
+  findAllAudits() {
+    return this.maintenancesService.findAllAudits();
   }
 
   @Get('my')
@@ -62,6 +69,13 @@ export class MaintenancesController {
   @ApiOperation({ summary: 'Mantenimientos asignados a un mecánico' })
   findByMechanic(@Param('mechanicId', ParseIntPipe) mechanicId: number) {
     return this.maintenancesService.findByMechanic(mechanicId);
+  }
+
+  @Get(':id/audit')
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: 'Auditoría: cambios de estado de un mantenimiento' })
+  findAudit(@Param('id', ParseIntPipe) id: number) {
+    return this.maintenancesService.findAudit(id);
   }
 
   @Get(':id')

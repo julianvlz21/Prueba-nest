@@ -3,12 +3,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Mechanic } from '../mechanics/entities/mechanic.entity.js';
 import { Vehicle } from '../vehicles/entities/vehicle.entity.js';
 import { Workshop } from '../workshops/entities/workshop.entity.js';
+import { MaintenanceAudit } from './entities/maintenance-audit.entity.js';
 import { Maintenance } from './entities/maintenance.entity.js';
 import { MaintenancesController } from './maintenances.controller.js';
 import { MaintenancesService } from './maintenances.service.js';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Maintenance, Mechanic, Vehicle, Workshop])],
+  imports: [TypeOrmModule.forFeature([Maintenance, MaintenanceAudit, Mechanic, Vehicle, Workshop])],
   controllers: [MaintenancesController],
   providers: [MaintenancesService],
   exports: [MaintenancesService],

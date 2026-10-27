@@ -95,7 +95,7 @@ async function seed() {
       vehicleId: vehiclesByPlate.get('ABC123')!.id,
       mechanicId: laura.id,
       workshopId: workshop.id,
-    });
+    }, actor);
     await maintenances.updateStatus(done.id, { status: MaintenanceStatus.IN_PROGRESS }, actor);
     await maintenances.updateStatus(
       done.id,
@@ -119,7 +119,7 @@ async function seed() {
       vehicleId: vehiclesByPlate.get('GHI789')!.id,
       mechanicId: carlos.id,
       workshopId: workshop.id,
-    });
+    }, actor);
     await maintenances.updateStatus(running.id, { status: MaintenanceStatus.IN_PROGRESS }, actor);
     console.log('+ mantenimientos');
   }

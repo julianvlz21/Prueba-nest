@@ -18,6 +18,7 @@ import { Vehicle } from '../vehicles/entities/vehicle.entity.js';
 import { Workshop } from '../workshops/entities/workshop.entity.js';
 import { CreateMaintenanceDto } from './dto/create-maintenance.dto.js';
 import { UpdateMaintenanceStatusDto } from './dto/update-maintenance-status.dto.js';
+import { MaintenanceAudit } from './entities/maintenance-audit.entity.js';
 import { Maintenance } from './entities/maintenance.entity.js';
 
 const { SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED } = MaintenanceStatus;
@@ -39,6 +40,7 @@ const RELATIONS = { vehicle: true, mechanic: true, workshop: true } as const;
 export class MaintenancesService {
   constructor(
     @InjectRepository(Maintenance) private readonly repo: Repository<Maintenance>,
+    @InjectRepository(MaintenanceAudit) private readonly auditRepo: Repository<MaintenanceAudit>,
     @InjectRepository(Mechanic) private readonly mechanicsRepo: Repository<Mechanic>,
     @InjectRepository(Vehicle) private readonly vehiclesRepo: Repository<Vehicle>,
     @InjectDataSource() private readonly dataSource: DataSource,
@@ -49,7 +51,7 @@ export class MaintenancesService {
    * mechanic rows so two concurrent requests cannot both pass the "one active per
    * vehicle" and "no overlapping schedule per mechanic" checks.
    */
-  async create(dto: CreateMaintenanceDto): Promise<Maintenance> {
+  async create(dto: CreateMaintenanceDto, actor: JwtPayload): Promise<Maintenance> {
     const start = new Date(dto.scheduledDate);
     const end = new Date(start.getTime() + (dto.durationMinutes ?? 60) * 60_000);
 
@@ -115,6 +117,7 @@ export class MaintenancesService {
           workshopId: workshop.id,
         }),
       );
+      await this.recordAudit(manager, saved.id, null, SCHEDULED, actor);
       return saved.id;
     });
 
@@ -192,9 +195,22 @@ export class MaintenancesService {
 
       maintenance.status = to;
       await manager.save(maintenance);
+      // Same transaction as the change itself: no status change without its audit row.
+      await this.recordAudit(manager, maintenance.id, from, to, actor);
     });
 
     return this.findOne(id);
+  }
+
+  /** Status-change log of one maintenance, oldest first. */
+  async findAudit(id: number): Promise<MaintenanceAudit[]> {
+    await this.findOne(id);
+    return this.auditRepo.find({ where: { maintenanceId: id }, order: { id: 'ASC' } });
+  }
+
+  /** Status-change log of every maintenance, most recent first. */
+  findAllAudits(): Promise<MaintenanceAudit[]> {
+    return this.auditRepo.find({ order: { id: 'DESC' } });
   }
 
   findAll(): Promise<Maintenance[]> {
@@ -246,6 +262,24 @@ export class MaintenancesService {
     const maintenance = await this.findOne(id);
     await this.assertCanAccess(maintenance, actor);
     return maintenance;
+  }
+
+  private recordAudit(
+    manager: EntityManager,
+    maintenanceId: number,
+    fromStatus: MaintenanceStatus | null,
+    toStatus: MaintenanceStatus,
+    actor: JwtPayload,
+  ) {
+    return manager.save(
+      manager.create(MaintenanceAudit, {
+        maintenanceId,
+        fromStatus,
+        toStatus,
+        changedById: actor.sub,
+        changedByEmail: actor.email,
+      }),
+    );
   }
 
   private async findOne(id: number): Promise<Maintenance> {
