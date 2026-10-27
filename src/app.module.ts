@@ -10,6 +10,7 @@ import { RolesGuard } from './common/guards/roles.guard.js';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor.js';
 import { MaintenancesModule } from './maintenances/maintenances.module.js';
 import { MechanicsModule } from './mechanics/mechanics.module.js';
+import { SeedModule } from './seed/seed.module.js';
 import { UsersModule } from './users/users.module.js';
 import { VehiclesModule } from './vehicles/vehicles.module.js';
 import { WorkshopsModule } from './workshops/workshops.module.js';
@@ -37,6 +38,7 @@ import { WorkshopsModule } from './workshops/workshops.module.js';
     WorkshopsModule,
     MaintenancesModule,
     IntegrationsModule,
+    SeedModule,
   ],
   providers: [
     // Order matters: authenticate first, then check the role.
